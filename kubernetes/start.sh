@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-minikube start
-eval $(minikube docker-env)
+#minikube start
+#eval $(minikube docker-env)
 
 kubectl delete deployment,service,rs --all
 
