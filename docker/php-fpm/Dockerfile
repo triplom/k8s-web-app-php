@@ -1,4 +1,4 @@
-FROM php:7.4-fpm
+FROM php:8-fpm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -22,7 +22,7 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 WORKDIR /srv/app
 
 RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
-RUN echo "date.timezone=Europe/Rome" >> /usr/local/etc/php/php.ini
+RUN echo "date.timezone=Europe/Lisbon" >> /usr/local/etc/php/php.ini
 
 EXPOSE 9000
 CMD ["php-fpm"]

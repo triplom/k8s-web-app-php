@@ -3,7 +3,7 @@
 #minikube start
 #eval $(minikube docker-env)
 
-kubectl delete deployment,service,rs --all
+#kubectl delete deployment,service,rs --all
 
 kubectl apply -f configMap.yaml
 kubectl apply -f volumes -f pods -f services
