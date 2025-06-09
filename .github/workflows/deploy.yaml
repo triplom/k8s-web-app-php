@@ -56,16 +56,16 @@ jobs:
           
           # Print Docker Compose configuration
           echo "Building using docker-compose.yml:"
-          docker-compose config
+          docker compose config
           
           # Build and push all services defined in docker-compose.yml
-          docker-compose build
+          docker compose build
           
           # Tag and push each service
-          services=$(docker-compose config --services)
+          services=$(docker compose config --services)
           for service in $services; do
-            # Get the image name from docker-compose
-            image_name=$(docker-compose images -q $service)
+            # Get the image name from docker compose
+            image_name=$(docker compose images -q $service)
             
             # Tag with GitHub Container Registry path
             docker tag $image_name ghcr.io/${{ steps.meta.outputs.repo_name }}/$service:${{ github.sha }}
