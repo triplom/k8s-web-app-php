@@ -101,6 +101,6 @@ jobs:
                 "repository": "${{ github.repository }}",
                 "ref": "${{ github.ref_name }}",
                 "registry": "ghcr.io/${{ steps.meta.outputs.repo_name }}",
-                "environment": "${{ inputs.environment || '"'"'dev'"'"' }}"
+                "environment": "${{ inputs.environment || 'dev' }}"
               }
             }'
