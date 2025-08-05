@@ -1,0 +1,69 @@
+name: Trigger Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'kubernetes/**'
+      - 'deploy/**'
+      - 'docker/**'
+      - 'config/**'
+      - 'bin/**'
+      - 'etc/**'
+      - 'tests/**'
+      - 'features/**'
+      - 'docs/**'
+      - 'public/**'
+      - 'templates/**'
+      - 'assets/**'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+      version:
+        description: 'Version to deploy (defaults to latest commit)'
+        required: false
+
+jobs:
+  trigger-deployment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Get version information
+        id: version
+        run: |
+          # Default to short commit SHA if no version specified
+          if [ -z "${{ github.event.inputs.version }}" ]; then
+            VERSION="${GITHUB_SHA::7}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+      
+      - name: Trigger deployment in infrastructure repo
+        uses: peter-evans/repository-dispatch@v2
+        with:
+          token: ${{ secrets.INFRA_REPO_PAT }}
+          repository: triplom/infrastructure-repo
+          event-type: app-deployment-request
+          client-payload: |
+            {
+              "app_name": "external-app",
+              "repository": "${{ github.repository }}",
+              "ref": "${{ github.ref }}",
+              "version": "${{ steps.version.outputs.version }}",
+              "environment": "${{ github.event.inputs.environment || 'dev' }}"
+            }
