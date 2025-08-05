@@ -4,12 +4,12 @@ resources:
 - ../../base
 - ingress.yaml
 
-namespace: app-qa
+namespace: k8s-web-app-php-qa
 
 patches:
 - target:
     kind: Deployment
-    name: app
+    name: k8s-web-app-php
   patch: |-
     - op: replace
       path: /spec/template/spec/imagePullSecrets
@@ -17,7 +17,7 @@ patches:
       - name: github-registry-secret
 
 configMapGenerator:
-- name: app-config
+- name: k8s-web-app-php-config
   behavior: merge
   literals:
   - ENVIRONMENT=qa

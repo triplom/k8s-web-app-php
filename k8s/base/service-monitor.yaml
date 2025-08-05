@@ -2,14 +2,14 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: app
+  name: k8s-web-app-php
   labels:
-    app: app
+    app: k8s-web-app-php
     release: kube-prometheus-stack
 spec:
   selector:
     matchLabels:
-      app: app
+      app: k8s-web-app-php
   endpoints:
   - port: metrics
     path: /metrics

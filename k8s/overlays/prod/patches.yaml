@@ -1,21 +1,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: app
+  name: k8s-web-app-php
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: app
+      app: k8s-web-app-php
   template:
     spec:
       containers:
-      - name: app
+      - name: php-fpm
         env:
-        - name: ENVIRONMENT
-          value: "production"
-        - name: LOG_LEVEL
-          value: "debug"
+        - name: APP_ENV
+          value: "prod"
+        - name: APP_DEBUG
+          value: "false"
         resources:
           limits:
             memory: "128Mi"

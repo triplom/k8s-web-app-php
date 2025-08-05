@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: app
+  name: k8s-web-app-php
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "letsencrypt-staging" # Use staging for testing, then switch to prod
@@ -11,7 +11,7 @@ spec:
   tls:
   - hosts:
     - app-qa.gitops.local
-    secretName: app-qa-tls
+    secretName: k8s-web-app-php-qa-tls
   rules:
   - host: app-qa.gitops.local
     http:
@@ -20,6 +20,6 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: app
+            name: k8s-web-app-php
             port:
               number: 80
