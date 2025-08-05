@@ -1,0 +1,24 @@
+# /kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+- service.yaml
+- configmap.yaml
+- service-monitor.yaml
+- volumes/pv-www-claim.yaml
+- volumes/pv-mysql.yaml
+
+namespace: app
+
+images:
+  - name: php-fpm
+    newName: ghcr.io/triplom/k8s-web-app-php/php-fpm
+    newTag: latest
+  - name: nginx
+    newName: ghcr.io/triplom/k8s-web-app-php/nginx
+    newTag: latest
+
+commonLabels:
+  app: k8s-web-app-php
+  version: v1
