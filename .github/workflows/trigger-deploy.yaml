@@ -61,7 +61,7 @@ jobs:
           event-type: app-deployment-request
           client-payload: |
             {
-              "app_name": "external-app",
+              "app_name": "k8s-web-app-php",
               "repository": "${{ github.repository }}",
               "ref": "${{ github.ref }}",
               "version": "${{ steps.version.outputs.version }}",
