@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: k8s-web-app-php
-  namespace: k8s-web-app-php-dev
+  namespace: k8s-web-app-php
 spec:
   replicas: 1
   selector:

@@ -3,23 +3,16 @@ kind: Deployment
 metadata:
   name: k8s-web-app-php
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: k8s-web-app-php
+  replicas: 1
   template:
     spec:
       containers:
-      - name: k8s-web-app-php
-        env:
-        - name: APP_ENV
-          value: "qa"
-        - name: APP_DEBUG
-          value: "true"
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "250m"
-          requests:
-            memory: "64Mi"
-            cpu: "100m"
+        - name: php-fpm
+          env:
+            - name: APP_ENV
+              value: "qa"
+            - name: APP_DEBUG
+              value: "true"
