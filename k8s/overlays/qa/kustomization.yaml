@@ -3,22 +3,25 @@ kind: Kustomization
 resources:
 - ../../base
 - ingress.yaml
-
 namespace: k8s-web-app-php-qa
-
 patches:
-- target:
-    kind: Deployment
-    name: k8s-web-app-php
-  patch: |-
+- patch: |-
     - op: replace
       path: /spec/template/spec/imagePullSecrets
       value:
       - name: github-registry-secret
-
+  target:
+    kind: Deployment
+    name: k8s-web-app-php
 configMapGenerator:
-- name: k8s-web-app-php-config
-  behavior: merge
-  literals:
+- literals: # <--- REMOVED 'behavior: merge'
   - ENVIRONMENT=qa
   - LOG_LEVEL=DEBUG
+  name: k8s-web-app-php-config
+images:
+- name: nginx
+  newName: ghcr.io/triplom/k8s-web-app-php/nginx
+  newTag: latest
+- name: php-fpm
+  newName: ghcr.io/triplom/k8s-web-app-php/php-fpm
+  newTag: latest
