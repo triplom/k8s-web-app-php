@@ -20,7 +20,7 @@ spec:
         image: php-fpm:v4
         imagePullPolicy: Never
         ports:
-        - containerPort: 9000
+        - containerPort: 9001
           name: http
           protocol: TCP
         resources:
