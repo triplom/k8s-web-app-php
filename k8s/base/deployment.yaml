@@ -15,10 +15,12 @@ spec:
       labels:
         app: app
     spec:
+      imagePullSecrets:
+        - name: github-registry-secret
       containers:
-      - name: sylius-php-fpm
-        image: php-fpm:v4
-        imagePullPolicy: Never
+      - name: php-fpm
+        image: ghcr.io/triplom/k8s-web-app-php/php-fpm:latest
+        imagePullPolicy: Always  # Force pull from registry
         ports:
         - containerPort: 9001
           name: http
