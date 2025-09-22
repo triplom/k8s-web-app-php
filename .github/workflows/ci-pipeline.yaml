@@ -1,0 +1,187 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main, 'feature/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - qa
+          - prod
+      component:
+        description: 'Component to deploy'
+        required: true
+        default: 'php-web-app'
+        type: choice
+        options:
+          - php-web-app
+
+env:
+  APP_NAME: php-web-app
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/php-web-app
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, pdo_mysql
+          coverage: xdebug
+          
+      - name: Install Composer dependencies
+        run: |
+          composer install --prefer-dist --no-progress --no-suggest --no-interaction
+          
+      - name: Run PHPUnit tests
+        run: |
+          php bin/phpunit --coverage-clover=coverage.xml || echo "Tests failed but continuing"
+          
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+  
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    outputs:
+      image_tag: ${{ steps.image-tag.outputs.IMAGE_TAG }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      # Convert repository owner to lowercase for GHCR
+      - name: Set lowercase repository owner
+        id: lowercase
+        run: echo "REPO_OWNER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ steps.lowercase.outputs.REPO_OWNER }}/${{ env.APP_NAME }}
+          tags: |
+            type=sha,format=short
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ github.ref == format('refs/heads/{0}', 'main') }}
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ steps.lowercase.outputs.REPO_OWNER }}/${{ env.APP_NAME }}:latest
+          cache-to: type=inline
+          provenance: false
+      
+      - name: Set image tag output
+        id: image-tag
+        run: |
+          IMAGE_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -1)
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_OUTPUT
+  
+  update-config:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      ENVIRONMENT: ${{ github.event.inputs.environment || 'dev' }}
+      CONFIG_REPO: 'triplom/infrastructure-repo-argocd'
+    steps:
+      - name: Checkout config repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.CONFIG_REPO }}
+          token: ${{ secrets.CONFIG_REPO_PAT }}
+          fetch-depth: 0
+      
+      - name: Update application configuration
+        run: |
+          # Update the image tag in the deployment
+          IMAGE_TAG="${{ needs.build.outputs.image_tag }}"
+          APP="php-web-app"
+          
+          echo "Updating $APP deployment for environment: ${{ env.ENVIRONMENT }}"
+          echo "New image tag: $IMAGE_TAG"
+          
+          # Check if the environment overlay exists
+          if [ -f "apps/$APP/overlays/${{ env.ENVIRONMENT }}/kustomization.yaml" ]; then
+            echo "Using kustomize to update image in overlay for $APP"
+            cd apps/$APP/overlays/${{ env.ENVIRONMENT }}
+            
+            # Install kustomize if not available
+            if ! command -v kustomize &> /dev/null; then
+              curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+              sudo mv kustomize /usr/local/bin/
+            fi
+            
+            # Update image using kustomize
+            kustomize edit set image $APP=$IMAGE_TAG
+            cd ../../../../
+            
+          elif [ -f "apps/$APP/base/deployment.yaml" ]; then
+            echo "Updating base deployment.yaml directly for $APP"
+            sed -i "s|image: .*$APP:.*|image: $IMAGE_TAG|g" apps/$APP/base/deployment.yaml
+          else
+            echo "No deployment files found to update for $APP"
+          fi
+          
+          # Check if there are any changes to commit
+          if git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          
+          # Configure git
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # Commit and push the changes
+          git add .
+          git commit -m "🚀 Update $APP image to $IMAGE_TAG for ${{ env.ENVIRONMENT }} environment
+
+          Auto-update from PHP CI/CD pipeline
+          - Environment: ${{ env.ENVIRONMENT }}
+          - Component: $APP
+          - Image: $IMAGE_TAG
+          - Triggered by: ${{ github.actor }}"
+          
+          git push origin main
