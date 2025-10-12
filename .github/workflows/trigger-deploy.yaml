@@ -43,6 +43,8 @@ jobs:
       packages: write
       id-token: write
     runs-on: ubuntu-latest
+    env:
+      INFRA_REPO_PAT: ${{ secrets.INFRA_REPO_PAT }}
     outputs:
       version: ${{ steps.version.outputs.version }}
       environment: ${{ steps.env.outputs.environment }}
@@ -134,7 +136,7 @@ jobs:
             }
 
       - name: Skip legacy deployment trigger (ArgoCD pull-based GitOps active)
-        if: ${{ secrets.INFRA_REPO_PAT == '' }}
+        if: ${{ secrets.INFRA_REPO_PAT }}
         run: |
           echo "ℹ️  INFRA_REPO_PAT not configured - skipping push-based GitOps dispatch"
           echo "✅ Images built and pushed to GHCR successfully:"
