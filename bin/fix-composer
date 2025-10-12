@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Composer dependency fix script for k8s-web-app-php
+# This script helps resolve common composer dependency issues
+
+set -e
+
+echo "🔧 PHP Composer Dependency Fix Script"
+echo "======================================"
+
+# Check PHP version
+echo "📋 Current PHP version:"
+php --version
+
+# Check Composer version
+echo "📋 Current Composer version:"
+composer --version
+
+echo ""
+echo "🧹 Cleaning existing dependencies..."
+rm -rf vendor/
+rm -f composer.lock
+
+echo ""
+echo "🔄 Attempting to install dependencies with different strategies..."
+
+# Strategy 1: Try with platform requirements ignored
+echo "Strategy 1: Installing with ignored platform requirements..."
+if composer install --ignore-platform-reqs --no-scripts --prefer-dist; then
+    echo "✅ Success with ignored platform requirements"
+    exit 0
+fi
+
+echo "❌ Strategy 1 failed, trying Strategy 2..."
+
+# Strategy 2: Update all dependencies
+echo "Strategy 2: Updating all dependencies..."
+if composer update --ignore-platform-reqs --no-scripts --prefer-dist --with-all-dependencies; then
+    echo "✅ Success with dependency update"
+    exit 0
+fi
+
+echo "❌ Strategy 2 failed, trying Strategy 3..."
+
+# Strategy 3: Install with minimum stability
+echo "Strategy 3: Installing with dev stability..."
+if composer config minimum-stability dev && composer install --ignore-platform-reqs --no-scripts --prefer-dist; then
+    echo "✅ Success with dev stability"
+    exit 0
+fi
+
+echo "❌ All strategies failed. Manual intervention required."
+echo ""
+echo "🔍 Troubleshooting tips:"
+echo "1. Consider updating composer.json to use more recent package versions"
+echo "2. Check if you're using the correct PHP version (7.3-7.4 recommended for this project)"
+echo "3. Some packages may need to be updated individually"
+echo ""
+echo "📦 Current problematic packages based on error logs:"
+echo "- ocramius/package-versions: needs composer-plugin-api ^1.0.0"
+echo "- symfony/flex: needs composer-plugin-api ^1.0"
+echo "- symfony/thanks: needs composer-plugin-api ^1.0"
+echo "- phpstan/extension-installer: needs composer-plugin-api ^1.1"
+echo ""
+echo "💡 Consider running: composer require ocramius/package-versions:^1.8 --update-with-dependencies"
+
+exit 1
