@@ -112,7 +112,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Trigger infrastructure deployment
+      - name: Trigger infrastructure deployment (legacy push-based GitOps)
+        # Only run if INFRA_REPO_PAT secret is configured for push-based GitOps testing
+        if: ${{ secrets.INFRA_REPO_PAT != '' }}
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.INFRA_REPO_PAT }}
@@ -131,13 +133,34 @@ jobs:
               "force_deploy": "${{ github.event.inputs.force_deploy || false }}"
             }
 
-      - name: Deployment triggered
+      - name: Skip legacy deployment trigger (ArgoCD pull-based GitOps active)
+        if: ${{ secrets.INFRA_REPO_PAT == '' }}
         run: |
-          echo "🚀 Deployment triggered successfully!"
+          echo "ℹ️  INFRA_REPO_PAT not configured - skipping push-based GitOps dispatch"
+          echo "✅ Images built and pushed to GHCR successfully:"
+          echo "   - ghcr.io/${{ github.repository }}/php-fpm:${{ steps.version.outputs.version }}"
+          echo "   - ghcr.io/${{ github.repository }}/nginx:${{ steps.version.outputs.version }}"
+          echo ""
+          echo "🎯 For pull-based GitOps (thesis research):"
+          echo "   ArgoCD will automatically detect and deploy these images"
+          echo "   Monitor deployment: https://github.com/triplom/infrastructure-repo-argocd"
+
+      - name: Build and deployment status
+        run: |
+          echo "🚀 Container images built and published successfully!"
           echo "• Application: k8s-web-app-php"
           echo "• Version: ${{ steps.version.outputs.version }}"
           echo "• Environment: ${{ steps.env.outputs.environment }}"
           echo "• Repository: ${{ github.repository }}"
           echo "• Triggered by: ${{ github.actor }}"
           echo ""
-          echo "Monitor the deployment at: https://github.com/triplom/infrastructure-repo/actions"
+          echo "📦 Published Images:"
+          echo "   - ghcr.io/${{ github.repository }}/php-fpm:${{ steps.version.outputs.version }}"
+          echo "   - ghcr.io/${{ github.repository }}/nginx:${{ steps.version.outputs.version }}"
+          echo ""
+          if [[ -n "${{ secrets.INFRA_REPO_PAT }}" ]]; then
+            echo "🔄 Legacy push-based GitOps: https://github.com/triplom/infrastructure-repo/actions"
+          else
+            echo "🎯 Pull-based GitOps (thesis research): https://github.com/triplom/infrastructure-repo-argocd"
+            echo "   ArgoCD will automatically detect and deploy new images"
+          fi
