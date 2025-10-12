@@ -1,5 +1,5 @@
 # ArgoCD GitOps CI Pipeline - Active workflow for pull-based GitOps thesis
-name: CI Pipeline
+name: External App CI Pipeline
 
 on:
   push:
