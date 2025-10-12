@@ -24,8 +24,8 @@ RUN apt-get update && apt-get install -y \
         pdo_mysql \
         zip
 
-# Install Composer
-COPY --from=composer:2.2 /usr/bin/composer /usr/bin/composer
+# Install Composer 1.x for compatibility with old plugins
+COPY --from=composer:1.10 /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /var/www/html
@@ -33,7 +33,7 @@ WORKDIR /var/www/html
 # Copy composer files
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies with platform requirements ignored for CI compatibility
+# Install PHP dependencies with Composer 1.x (no plugin configuration needed)
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs
 
 # Copy application code

@@ -24,29 +24,51 @@ rm -f composer.lock
 echo ""
 echo "🔄 Attempting to install dependencies with different strategies..."
 
-# Strategy 1: Try with platform requirements ignored
-echo "Strategy 1: Installing with ignored platform requirements..."
-if composer install --ignore-platform-reqs --no-scripts --prefer-dist; then
-    echo "✅ Success with ignored platform requirements"
+# Strategy 1: Try standard install
+echo "Strategy 1: Standard composer install..."
+if composer install --ignore-platform-reqs --prefer-dist --optimize-autoloader; then
+    echo "✅ Success with standard install"
     exit 0
 fi
 
 echo "❌ Strategy 1 failed, trying Strategy 2..."
 
-# Strategy 2: Update all dependencies
-echo "Strategy 2: Updating all dependencies..."
-if composer update --ignore-platform-reqs --no-scripts --prefer-dist --with-all-dependencies; then
-    echo "✅ Success with dependency update"
+# Strategy 2: Try with no scripts
+echo "Strategy 2: Installing without scripts..."
+if composer install --ignore-platform-reqs --no-scripts --prefer-dist --optimize-autoloader; then
+    echo "✅ Success without scripts"
     exit 0
 fi
 
 echo "❌ Strategy 2 failed, trying Strategy 3..."
 
-# Strategy 3: Install with minimum stability
-echo "Strategy 3: Installing with dev stability..."
-if composer config minimum-stability dev && composer install --ignore-platform-reqs --no-scripts --prefer-dist; then
-    echo "✅ Success with dev stability"
+# Strategy 3: Update all dependencies
+echo "Strategy 3: Updating all dependencies..."
+if composer update --ignore-platform-reqs --prefer-dist --with-all-dependencies --optimize-autoloader; then
+    echo "✅ Success with dependency update"
     exit 0
+fi
+
+echo "❌ Strategy 3 failed, trying Strategy 4..."
+
+# Strategy 4: Remove lock file and update
+echo "Strategy 4: Remove lock file and update..."
+rm -f composer.lock
+if composer update --ignore-platform-reqs --prefer-dist --with-all-dependencies --optimize-autoloader; then
+    echo "✅ Success with fresh lock file"
+    exit 0
+fi
+
+echo "❌ Strategy 4 failed, trying Strategy 5..."
+
+# Strategy 5: Try with specific composer version
+echo "Strategy 5: Checking if we can install older composer..."
+if command -v composer1 >/dev/null 2>&1; then
+    echo "Found composer1, trying with that..."
+    if composer1 install --ignore-platform-reqs --prefer-dist --optimize-autoloader; then
+        echo "✅ Success with composer1"
+        exit 0
+    fi
 fi
 
 echo "❌ All strategies failed. Manual intervention required."
