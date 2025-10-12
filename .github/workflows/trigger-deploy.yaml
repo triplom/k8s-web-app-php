@@ -1,12 +1,16 @@
+# Legacy Push-Based GitOps Workflow - DISABLED
+# This workflow is disabled in favor of ci-pipeline.yaml for ArgoCD pull-based GitOps
+# Re-enable this workflow if you need to test push-based GitOps comparison
 name: Trigger Infrastructure Deployment
 
 on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
+  # Temporarily disabled - using ci-pipeline.yaml for ArgoCD GitOps instead
+  # push:
+  #   branches:
+  #     - main
+  #   paths-ignore:
+  #     - 'README.md'
+  #     - 'docs/**'
   
   workflow_dispatch:
     inputs:

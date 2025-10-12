@@ -1,3 +1,4 @@
+# ArgoCD GitOps CI Pipeline - Active workflow for pull-based GitOps thesis
 name: CI Pipeline
 
 on:
