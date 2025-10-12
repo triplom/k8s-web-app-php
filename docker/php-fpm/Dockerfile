@@ -2,10 +2,9 @@ FROM php:8-fpm
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+			   libicu-dev \
 			   libpng-dev \
 			   libzip-dev \
-			   libicu-dev \
-			   libzip4 \
 	&& pecl install xdebug \
 	&& docker-php-ext-install opcache \
     && docker-php-ext-enable xdebug \
@@ -14,15 +13,13 @@ RUN apt-get update \
 	&& docker-php-ext-install zip \
 	&& docker-php-ext-install gd \
 	&& docker-php-ext-install intl \
-	&& docker-php-ext-install mysqli
-
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+	&& docker-php-ext-install mysqli \
+	&& apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /srv/app
 
-RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini
-RUN echo "date.timezone=Europe/Lisbon" >> /usr/local/etc/php/php.ini
+RUN cp /usr/local/etc/php/php.ini-production /usr/local/etc/php/php.ini \
+    && echo "date.timezone=Europe/Lisbon" >> /usr/local/etc/php/php.ini
 
 EXPOSE 9000
 CMD ["php-fpm"]
