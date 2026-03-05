@@ -8,7 +8,7 @@ on:
       - 'docker/**'
       - 'k8s/**'
       - 'composer.json'
-      - 'package.json'
+      - 'package.json'azure
   pull_request:
     branches: [ main ]
     paths:
