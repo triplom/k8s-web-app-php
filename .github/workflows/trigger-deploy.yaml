@@ -116,7 +116,7 @@ jobs:
 
       - name: Trigger infrastructure deployment (legacy push-based GitOps)
         # Only run if INFRA_REPO_PAT secret is configured for push-based GitOps testing
-        if: ${{ secrets.INFRA_REPO_PAT != '' }}
+        if: ${{ env.INFRA_REPO_PAT != '' }}
         uses: peter-evans/repository-dispatch@v2
         with:
           token: ${{ secrets.INFRA_REPO_PAT }}
@@ -136,7 +136,7 @@ jobs:
             }
 
       - name: Skip legacy deployment trigger (ArgoCD pull-based GitOps active)
-        if: ${{ secrets.INFRA_REPO_PAT }}
+        if: ${{ env.INFRA_REPO_PAT == '' }}
         run: |
           echo "ℹ️  INFRA_REPO_PAT not configured - skipping push-based GitOps dispatch"
           echo "✅ Images built and pushed to GHCR successfully:"
